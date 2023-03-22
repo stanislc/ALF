@@ -85,7 +85,7 @@ def SetVarsCharmm(alf_info,Step):
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
 
-  fp.write("set sysname = \""+name+"\n")
+  fp.write("set sysname = "+name+"\n")
   fp.write("trim sysname from 2\n")
   fp.write("set nnodes = "+str(nnodes)+"\n")
   fp.write("set nreps = "+str(nreps)+"\n")
