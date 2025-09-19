@@ -32,7 +32,7 @@ def GetLambdaCharmm(alf_info,fnmout,fnmsin):
     # The header and icntrl array are read in as a single record
     # Read the icntrl array (length 20) and extract key variables
 
-    header = (fp.read_record([('hdr',np.string_,4),('icntrl',np.int32,20)]))
+    header = (fp.read_record([('hdr',np.bytes_,4),('icntrl',np.int32,20)]))
     hdr = header['hdr'][0]
     icntrl = header['icntrl'][0][:]
     nfile = icntrl[0]     # Total number of dynamcis steps in lambda file
@@ -45,8 +45,8 @@ def GetLambdaCharmm(alf_info,fnmout,fnmsin):
     delta4 = (fp.read_record(dtype=np.float32))
 
     # Title in trajectoory file 
-    # title = (fp.read_record([('h',np.int32,1),('title',np.string_,80)]))[0][1]
-    title = (fp.read_record([('h',np.int32),('title',np.string_,80)]))[0][1]
+    # title = (fp.read_record([('h',np.int32,1),('title',np.bytes_,80)]))[0][1]
+    title = (fp.read_record([('h',np.int32),('title',np.bytes_,80)]))[0][1]
 
     # Unused in current processing
     nbiasv = (fp.read_record(dtype=np.int32))
