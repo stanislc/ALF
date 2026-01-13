@@ -1,6 +1,8 @@
 #! /usr/bin/env python
 
-def GetFreeEnergy5(alf_info,ms,msprof):
+def GetFreeEnergy5(alf_info, ms=0, msprof=0, cutb=2.0, cutc=8.0, cutx=0.2, cuts=0.2,
+                   cutc2=1.0, cutx2=0.5, cuts2=0.5, calc_omega=True, calc_chi=True,
+                   bias_boost_strength=0.0):
   """
   Perform the matrix inversion to solve for optimal bias changes
 
@@ -33,6 +35,13 @@ def GetFreeEnergy5(alf_info,ms,msprof):
   msprof : int
       Flag for whether to include intersite profiles. 0 for no, 1 for yes.
       Typically taken from the second element of ntersite list.
+  calc_omega : bool
+      Whether to calculate x (omega) parameters. Default True.
+  calc_chi : bool
+      Whether to calculate s (chi) parameters. Default True.
+  bias_boost_strength : float
+      Strength of bias boost for undersampled sites. 0 disables boost.
+      Higher values (1-5) give stronger push away from zero bias.
   """
 
   import sys, os
@@ -41,15 +50,7 @@ def GetFreeEnergy5(alf_info,ms,msprof):
   kT=0.001987*alf_info['temp']
   krest=1
 
-  cutb=2
-  cutc=8
-  cutx=2
-  cuts=1
-  cutc2=2
-  cutx2=0.5
-  cuts2=0.5
-
-  Emid=np.arange(1.0/800,1,1.0/400)
+  Emid=np.arange(1.0/800,1,1.0/1000)
   Emid2=np.arange(1.0/40,1,1.0/20)
 
   nsubs=alf_info['nsubs']
@@ -60,66 +61,117 @@ def GetFreeEnergy5(alf_info,ms,msprof):
   x_prev=np.loadtxt('x_prev.dat')
   s_prev=np.loadtxt('s_prev.dat')
 
+  # Ensure b_prev is 2D
+  if b_prev.ndim == 1:
+    b_prev = b_prev.reshape(1, -1)
+
   b=np.zeros((1,nblocks))
   c=np.zeros((nblocks,nblocks))
   x=np.zeros((nblocks,nblocks))
   s=np.zeros((nblocks,nblocks))
 
+  # Count parameters (conditional on calc_omega/calc_chi)
   nparm=0
   for isite in range(0,len(nsubs)):
     n1=nsubs[isite]
-    n2=nsubs[isite]*(nsubs[isite]-1)//2;
+    n2=nsubs[isite]*(nsubs[isite]-1)//2
     for jsite in range(isite,len(nsubs)):
       n3=nsubs[isite]*nsubs[jsite]
       if isite==jsite:
-        nparm+=n1+5*n2
+        nparm += n1 + n2  # b + c always
+        if calc_omega:
+          nparm += 2*n2  # x terms
+        if calc_chi:
+          nparm += 2*n2  # s terms
       elif ms==1:
-        nparm+=5*n3
+        nparm += n3  # c2 always
+        if calc_omega:
+          nparm += 2*n3  # x2 terms
+        if calc_chi:
+          nparm += 2*n3  # s2 terms
       elif ms==2:
-        nparm+=n3
+        nparm += n3
 
   cutlist=np.zeros((nparm,))
   reglist=np.zeros((nparm,))
+
+  # Check if bias boost is needed
+  bias_magnitude = np.linalg.norm(b_prev)
+  min_boost_threshold = 0.02 * kT
+  needs_bias_boost = bias_boost_strength > 0 and bias_magnitude < min_boost_threshold
+
+  if needs_bias_boost:
+    print(f"Applying bias boost (strength={bias_boost_strength})")
+
   n0=0
   iblock=0
   for isite in range(0,len(nsubs)):
     jblock=iblock
     n1=nsubs[isite]
-    n2=nsubs[isite]*(nsubs[isite]-1)//2;
+    n2=nsubs[isite]*(nsubs[isite]-1)//2
     for jsite in range(isite,len(nsubs)):
       n3=nsubs[isite]*nsubs[jsite]
       if isite==jsite:
+        # b parameters
         cutlist[n0:n0+n1]=cutb
+
+        # Apply bias boost if needed
+        if needs_bias_boost:
+          ind = n0
+          for i in range(nsubs[isite]):
+            if abs(b_prev[0, iblock+i]) < 1e-6:
+              # Boost toward non-zero values for non-reference states
+              if i > 0:
+                reglist[ind] = -bias_boost_strength * kT
+            else:
+              reglist[ind] = -b_prev[0, iblock+i]
+            ind += 1
+
         n0+=n1
+
+        # c parameters
         cutlist[n0:n0+n2]=cutc
         n0+=n2
-        cutlist[n0:n0+2*n2]=cutx
-        n0+=2*n2
-        cutlist[n0:n0+2*n2]=cuts
-        n0+=2*n2
+
+        # x parameters (conditional)
+        if calc_omega:
+          cutlist[n0:n0+2*n2]=cutx
+          n0+=2*n2
+
+        # s parameters (conditional)
+        if calc_chi:
+          cutlist[n0:n0+2*n2]=cuts
+          n0+=2*n2
+
       elif ms==1:
+        # c2 parameters
         cutlist[n0:n0+n3]=cutc2
         n0+=n3
 
-        ind=n0
-        for i in range(0,nsubs[isite]):
-          for j in range(0,nsubs[jsite]):
-            reglist[ind]=-x_prev[iblock+i,jblock+j]
-            ind+=1
-            reglist[ind]=-x_prev[jblock+j,iblock+i]
-            ind+=1
-        cutlist[n0:n0+2*n3]=cutx2
-        n0+=2*n3
+        # x2 parameters (conditional)
+        if calc_omega:
+          ind=n0
+          for i in range(0,nsubs[isite]):
+            for j in range(0,nsubs[jsite]):
+              reglist[ind]=-x_prev[iblock+i,jblock+j]
+              ind+=1
+              reglist[ind]=-x_prev[jblock+j,iblock+i]
+              ind+=1
+          cutlist[n0:n0+2*n3]=cutx2
+          n0+=2*n3
 
-        ind=n0
-        for i in range(0,nsubs[isite]):
-          for j in range(0,nsubs[jsite]):
-            reglist[ind]=-s_prev[iblock+i,jblock+j]
-            ind+=1
-            reglist[ind]=-s_prev[jblock+j,iblock+i]
-            ind+=1
-        cutlist[n0:n0+2*n3]=cuts2
-        n0+=2*n3
+        # s2 parameters (conditional)
+        if calc_chi:
+          ind=n0
+          for i in range(0,nsubs[isite]):
+            for j in range(0,nsubs[jsite]):
+              reglist[ind]=-s_prev[iblock+i,jblock+j]
+              ind+=1
+              reglist[ind]=-s_prev[jblock+j,iblock+i]
+              ind+=1
+          cutlist[n0:n0+2*n3]=cuts2
+          n0+=2*n3
+
       elif ms==2:
         cutlist[n0:n0+n3]=cutc2
         n0+=n3
@@ -132,66 +184,81 @@ def GetFreeEnergy5(alf_info,ms,msprof):
   for i in range(0,n0):
     C[i,i]+=krest*cutlist[i]**-2
   for i in range(0,np.shape(C)[0]):
-    if C[i,i]==0:
-      C[i,i]=1;
+    if np.isclose(C[i,i], 0):
+      C[i,i]=1
   V=np.loadtxt('multisite/V.dat')
   for i in range(0,n0):
     # Add a harmonic restraint to the total value of the x and s cross terms
     V[i]+=(krest*cutlist[i]**-2)*reglist[i]
 
   # coeff=C^-1*V;
-  coeff=np.linalg.solve(C,V)
+  try:
+    coeff = np.linalg.solve(C, V)
+  except np.linalg.LinAlgError:
+    print("Warning: C is singular or ill-conditioned, using least squares solution.")
+    coeff, _, _, _ = np.linalg.lstsq(C, V, rcond=None)
 
-  coeff_orig=coeff
 
   scaling=1.5/np.max(np.abs(coeff[0:n0]/cutlist))
-  if scaling>1:
+  if scaling>1 or np.isnan(scaling) or np.isinf(scaling):
     scaling=1
   coeff*=scaling
 
   print("scaling is:")
   print(scaling)
 
+  # Extract coefficients back to matrices
   ind=0
   iblock=0
   for isite in range(0,len(nsubs)):
     jblock=iblock
     for jsite in range(isite,len(nsubs)):
       if isite==jsite:
+        # b coefficients
         for i in range(0,nsubs[isite]):
           b[0,iblock+i]=coeff[ind]
           ind+=1
+        # c coefficients
         for i in range(0,nsubs[isite]):
           for j in range(i+1,nsubs[isite]):
             c[iblock+i,jblock+j]=coeff[ind]
             ind+=1
-        for i in range(0,nsubs[isite]):
-          for j in range(0,nsubs[isite]):
-            if i != j:
-              x[iblock+i,jblock+j]=coeff[ind]
-              ind+=1
-        for i in range(0,nsubs[isite]):
-          for j in range(0,nsubs[isite]):
-            if i != j:
-              s[iblock+i,jblock+j]=coeff[ind]
-              ind+=1
+        # x coefficients (conditional)
+        if calc_omega:
+          for i in range(0,nsubs[isite]):
+            for j in range(0,nsubs[isite]):
+              if i != j:
+                x[iblock+i,jblock+j]=coeff[ind]
+                ind+=1
+        # s coefficients (conditional)
+        if calc_chi:
+          for i in range(0,nsubs[isite]):
+            for j in range(0,nsubs[isite]):
+              if i != j:
+                s[iblock+i,jblock+j]=coeff[ind]
+                ind+=1
       elif ms==1:
+        # c2 coefficients
         for i in range(0,nsubs[isite]):
           for j in range(0,nsubs[jsite]):
             c[iblock+i,jblock+j]=coeff[ind]
             ind+=1
-        for i in range(0,nsubs[isite]):
-          for j in range(0,nsubs[jsite]):
-            x[iblock+i,jblock+j]=coeff[ind]
-            ind+=1
-            x[jblock+j,iblock+i]=coeff[ind]
-            ind+=1
-        for i in range(0,nsubs[isite]):
-          for j in range(0,nsubs[jsite]):
-            s[iblock+i,jblock+j]=coeff[ind]
-            ind+=1
-            s[jblock+j,iblock+i]=coeff[ind]
-            ind+=1
+        # x2 coefficients (conditional)
+        if calc_omega:
+          for i in range(0,nsubs[isite]):
+            for j in range(0,nsubs[jsite]):
+              x[iblock+i,jblock+j]=coeff[ind]
+              ind+=1
+              x[jblock+j,iblock+i]=coeff[ind]
+              ind+=1
+        # s2 coefficients (conditional)
+        if calc_chi:
+          for i in range(0,nsubs[isite]):
+            for j in range(0,nsubs[jsite]):
+              s[iblock+i,jblock+j]=coeff[ind]
+              ind+=1
+              s[jblock+j,iblock+i]=coeff[ind]
+              ind+=1
       elif ms==2:
         for i in range(0,nsubs[isite]):
           for j in range(0,nsubs[jsite]):
@@ -220,7 +287,7 @@ def GetFreeEnergy5(alf_info,ms,msprof):
     iblock+=nsubs[isite]
 
 
-  np.savetxt('b.dat',b,fmt=' %7.2f')
-  np.savetxt('c.dat',c,fmt=' %7.2f')
-  np.savetxt('x.dat',x,fmt=' %7.2f')
-  np.savetxt('s.dat',s,fmt=' %7.2f')
+  np.savetxt('b.dat',b,fmt=' %7.4f')
+  np.savetxt('c.dat',c,fmt=' %7.4f')
+  np.savetxt('x.dat',x,fmt=' %7.4f')
+  np.savetxt('s.dat',s,fmt=' %7.4f')

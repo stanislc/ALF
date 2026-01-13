@@ -1,5 +1,11 @@
-alf.egg-info
-alf/__pycache__
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Build artifacts - ALF specific
 alf/dca/CMakeCache.txt
 alf/dca/CMakeFiles
 alf/dca/Filter
@@ -7,7 +13,6 @@ alf/dca/LM
 alf/dca/Makefile
 alf/dca/Moment
 alf/dca/PLM
-alf/dca/__pycache__
 alf/dca/cmake_install.cmake
 alf/lmalf/CMakeCache.txt
 alf/lmalf/CMakeFiles/
@@ -15,10 +20,8 @@ alf/lmalf/Makefile
 alf/lmalf/cmake_install.cmake
 alf/lmalf/lmalf
 alf/lmalf/whamweight
-alf/util/__pycache__
 alf/wham/CMakeCache.txt
 alf/wham/CMakeFiles
 alf/wham/Makefile
-alf/wham/__pycache__
 alf/wham/cmake_install.cmake
 alf/wham/libwham.so
