@@ -35,19 +35,19 @@ def SetVarsCharmm(alf_info,Step,minimize=False):
   b=np.loadtxt('b.dat')
   b_sum=b_prev+b
   b_sum=np.reshape(b_sum,(1,-1))
-  np.savetxt('b_sum.dat',b_sum,fmt=' %7.2f')
+  np.savetxt('b_sum.dat',b_sum,fmt=' %7.3f')
 
   ibuff=0
   for i in range(0,len(nsubs)):
     for j in range(0,nsubs[i]):
-      line=("set lams%ds%d = %8.2f\n" % (i+1,j+1,b_sum[0,ibuff+j]))
+      line=("set lams%ds%d = %8.3f\n" % (i+1,j+1,b_sum[0,ibuff+j]))
       fp.write(line)
     ibuff+=nsubs[i]
 
   c_prev=np.loadtxt('c_prev.dat')
   c=np.loadtxt('c.dat')
   c_sum=c_prev+c
-  np.savetxt('c_sum.dat',c_sum,fmt=' %7.2f')
+  np.savetxt('c_sum.dat',c_sum,fmt=' %7.3f')
 
   ibuff=0
   for si in range(0,len(nsubs)):
@@ -60,7 +60,7 @@ def SetVarsCharmm(alf_info,Step,minimize=False):
           j0=i+1
         for j in range(j0,nsubs[sj]):
           jj=j+jbuff
-          line=("set cs%ds%ds%ds%d = %8.2f\n" % (si+1,i+1,sj+1,j+1,-c_sum[ii,jj]))
+          line=("set cs%ds%ds%ds%d = %8.3f\n" % (si+1,i+1,sj+1,j+1,-c_sum[ii,jj]))
           fp.write(line)
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
@@ -68,7 +68,7 @@ def SetVarsCharmm(alf_info,Step,minimize=False):
   x_prev=np.loadtxt('x_prev.dat')
   x=np.loadtxt('x.dat')
   x_sum=x_prev+x
-  np.savetxt('x_sum.dat',x_sum,fmt=' %7.2f')
+  np.savetxt('x_sum.dat',x_sum,fmt=' %7.3f')
 
   ibuff=0
   for si in range(0,len(nsubs)):
@@ -79,7 +79,7 @@ def SetVarsCharmm(alf_info,Step,minimize=False):
         for j in range(0,nsubs[sj]):
           jj=j+jbuff
           if ii!=jj:
-            line=("set xs%ds%ds%ds%d = %8.2f\n" % (si+1,i+1,sj+1,j+1,-x_sum[ii,jj]))
+            line=("set xs%ds%ds%ds%d = %8.3f\n" % (si+1,i+1,sj+1,j+1,-x_sum[ii,jj]))
             fp.write(line)
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
@@ -87,7 +87,7 @@ def SetVarsCharmm(alf_info,Step,minimize=False):
   s_prev=np.loadtxt('s_prev.dat')
   s=np.loadtxt('s.dat')
   s_sum=s_prev+s
-  np.savetxt('s_sum.dat',s_sum,fmt=' %7.2f')
+  np.savetxt('s_sum.dat',s_sum,fmt=' %7.3f')
 
   ibuff=0
   for si in range(0,len(nsubs)):
@@ -98,7 +98,7 @@ def SetVarsCharmm(alf_info,Step,minimize=False):
         for j in range(0,nsubs[sj]):
           jj=j+jbuff
           if ii!=jj:
-            line=("set ss%ds%ds%ds%d = %8.2f\n" % (si+1,i+1,sj+1,j+1,-s_sum[ii,jj]))
+            line=("set ss%ds%ds%ds%d = %8.3f\n" % (si+1,i+1,sj+1,j+1,-s_sum[ii,jj]))
             fp.write(line)
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
@@ -153,19 +153,19 @@ def SetVarsBlade(alf_info,Step,minimize=False):
   b=np.loadtxt('b.dat')
   b_sum=b_prev+b
   b_sum=np.reshape(b_sum,(1,-1))
-  np.savetxt('b_sum.dat',b_sum,fmt=' %7.2f')
+  np.savetxt('b_sum.dat',b_sum,fmt=' %7.3f')
 
   ibuff=0
   for i in range(0,len(nsubs)):
     for j in range(0,nsubs[i]):
-      line=("variables set lams%ds%d %8.2f\n" % (i+1,j+1,-b_sum[0,ibuff+j]))
+      line=("variables set lams%ds%d %8.3f\n" % (i+1,j+1,-b_sum[0,ibuff+j]))
       fp.write(line)
     ibuff+=nsubs[i]
 
   c_prev=np.loadtxt('c_prev.dat')
   c=np.loadtxt('c.dat')
   c_sum=c_prev+c
-  np.savetxt('c_sum.dat',c_sum,fmt=' %7.2f')
+  np.savetxt('c_sum.dat',c_sum,fmt=' %7.3f')
 
   ibuff=0
   for si in range(0,len(nsubs)):
@@ -178,7 +178,7 @@ def SetVarsBlade(alf_info,Step,minimize=False):
           j0=i+1
         for j in range(j0,nsubs[sj]):
           jj=j+jbuff
-          line=("variables set cs%ds%ds%ds%d %8.2f\n" % (si+1,i+1,sj+1,j+1,-c_sum[ii,jj]))
+          line=("variables set cs%ds%ds%ds%d %8.3f\n" % (si+1,i+1,sj+1,j+1,-c_sum[ii,jj]))
           fp.write(line)
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
@@ -186,7 +186,7 @@ def SetVarsBlade(alf_info,Step,minimize=False):
   x_prev=np.loadtxt('x_prev.dat')
   x=np.loadtxt('x.dat')
   x_sum=x_prev+x
-  np.savetxt('x_sum.dat',x_sum,fmt=' %7.2f')
+  np.savetxt('x_sum.dat',x_sum,fmt=' %7.3f')
 
   ibuff=0
   for si in range(0,len(nsubs)):
@@ -197,7 +197,7 @@ def SetVarsBlade(alf_info,Step,minimize=False):
         for j in range(0,nsubs[sj]):
           jj=j+jbuff
           if ii!=jj:
-            line=("variables set xs%ds%ds%ds%d %8.2f\n" % (si+1,i+1,sj+1,j+1,-x_sum[ii,jj]))
+            line=("variables set xs%ds%ds%ds%d %8.3f\n" % (si+1,i+1,sj+1,j+1,-x_sum[ii,jj]))
             fp.write(line)
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
@@ -205,7 +205,7 @@ def SetVarsBlade(alf_info,Step,minimize=False):
   s_prev=np.loadtxt('s_prev.dat')
   s=np.loadtxt('s.dat')
   s_sum=s_prev+s
-  np.savetxt('s_sum.dat',s_sum,fmt=' %7.2f')
+  np.savetxt('s_sum.dat',s_sum,fmt=' %7.3f')
 
   ibuff=0
   for si in range(0,len(nsubs)):
@@ -216,7 +216,7 @@ def SetVarsBlade(alf_info,Step,minimize=False):
         for j in range(0,nsubs[sj]):
           jj=j+jbuff
           if ii!=jj:
-            line=("variables set ss%ds%ds%ds%d %8.2f\n" % (si+1,i+1,sj+1,j+1,-s_sum[ii,jj]))
+            line=("variables set ss%ds%ds%ds%d %8.3f\n" % (si+1,i+1,sj+1,j+1,-s_sum[ii,jj]))
             fp.write(line)
       jbuff+=nsubs[sj]
     ibuff+=nsubs[si]
@@ -280,7 +280,7 @@ def SetVarsPycharmm(alf_info,Step,minimize=False):
   b_sum=b_prev+b
   b_sum=np.reshape(b_sum,(1,-1))
   np.round(b_sum,decimals=2)
-  np.savetxt('b_sum.dat',b_sum,fmt=' %7.2f')
+  np.savetxt('b_sum.dat',b_sum,fmt=' %7.3f')
 
   for i in range(0,len(nsubs)):
     for j in range(0,nsubs[i]):
@@ -291,7 +291,7 @@ def SetVarsPycharmm(alf_info,Step,minimize=False):
   c=np.loadtxt('c.dat')
   c_sum=c_prev+c
   np.round(c_sum,decimals=2)
-  np.savetxt('c_sum.dat',c_sum,fmt=' %7.2f')
+  np.savetxt('c_sum.dat',c_sum,fmt=' %7.3f')
 
   for si in range(0,len(nsubs)):
     for sj in range(si,len(nsubs)):
@@ -305,7 +305,7 @@ def SetVarsPycharmm(alf_info,Step,minimize=False):
   x=np.loadtxt('x.dat')
   x_sum=x_prev+x
   np.round(x_sum,decimals=2)
-  np.savetxt('x_sum.dat',x_sum,fmt=' %7.2f')
+  np.savetxt('x_sum.dat',x_sum,fmt=' %7.3f')
 
   for si in range(0,len(nsubs)):
     for sj in range(0,len(nsubs)):
@@ -319,7 +319,7 @@ def SetVarsPycharmm(alf_info,Step,minimize=False):
   s=np.loadtxt('s.dat')
   s_sum=s_prev+s
   np.round(s_sum,decimals=2)
-  np.savetxt('s_sum.dat',s_sum,fmt=' %7.2f')
+  np.savetxt('s_sum.dat',s_sum,fmt=' %7.3f')
 
   for si in range(0,len(nsubs)):
     for sj in range(0,len(nsubs)):
